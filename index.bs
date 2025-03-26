@@ -3776,7 +3776,11 @@ Content-Type: application/reports+json
           for="request">integrity metadata</a> and this directive's <a
           for="directive">value</a> is "`Matches`", return "`Allowed`".
 
-      3.  If |directive|'s <a for="directive">value</a> contains a <a>source
+      3.  If the result of executing [[#match-url-hash-to-source-list]] on
+          this directive's <a for="directive">value</a> and |request|'s
+          <a for="request">current url</a> is "`Matches`", return "`Allowed`".
+
+      4.  If |directive|'s <a for="directive">value</a> contains a <a>source
           expression</a> that is an <a>ASCII case-insensitive</a> match for
           the "<a grammar>`'strict-dynamic'`</a>" <a grammar>keyword-source</a>:
 
@@ -3788,7 +3792,7 @@ Content-Type: application/reports+json
               Note: "<a grammar>`'strict-dynamic'`</a>" is explained in more detail
               in [[#strict-dynamic-usage]].
 
-      4.  If the result of executing [[#match-request-to-source-list]] on
+      5.  If the result of executing [[#match-request-to-source-list]] on
           |request|, |directive|'s <a for="directive">value</a>, and |policy|,
           is "`Does Not Match`", return "`Blocked`".
 
@@ -3807,17 +3811,17 @@ Content-Type: application/reports+json
 
       1. Call [=potentially report hash=] with |response|, |request|, |directive| and |policy|.
 
-      1.  If the result of executing [[#match-nonce-to-source-list]] on
+      2.  If the result of executing [[#match-nonce-to-source-list]] on
           |request|'s <a for="request">cryptographic nonce metadata</a> and this
           directive's <a for="directive">value</a> is "`Matches`", return
           "`Allowed`".
 
-      1.  If the result of executing
+      3.  If the result of executing
           [[#match-integrity-metadata-to-source-list]] on |request|'s <a
           for="request">integrity metadata</a> and this directive's <a
           for="directive">value</a> is "`Matches`", return "`Allowed`".
 
-      1.  If |directive|'s <a for="directive">value</a> contains
+      4.  If |directive|'s <a for="directive">value</a> contains
           "<a grammar>`'strict-dynamic'`</a>":
 
           1.  If |request|'s <a for="request">parser metadata</a> is not
@@ -3825,7 +3829,7 @@ Content-Type: application/reports+json
 
               Otherwise, return "`Blocked`".
 
-      1.  If the result of executing [[#match-response-to-source-list]] on
+      5.  If the result of executing [[#match-response-to-source-list]] on
           |response|, |request|, |directive|'s <a for="directive">value</a>,
           and |policy|, is "`Does Not Match`", return "`Blocked`".
 
@@ -4414,30 +4418,25 @@ Content-Type: application/reports+json
   6.  Return "`Does Not Match`".
 
   <h5 id="match-url-hash-to-source-list" algorithm>
-    Does the hash of |url| match source list for |type|?
+    Does the hash of |url| match |source list|?
   </h5>
 
-  Given a <a>source list</a> |source list|, a string |type|, and a url |url|, this
-  algorithm returns "`Matches`" or "`Does Not Match`".
+  Given a <a>source list</a> |source list| and a url |url|, this algorithm
+  returns "`Matches`" or "`Does Not Match`".
 
-  Note: Regardless of the encoding of the document, |url| will be converted
-  to `UTF-8` before applying any hashing algorithms.
+  1.  Let |url-hashes flag| be `false`.
 
-  1.  If |type| is not "`script`", return "`Does Not Match`".
-
-  2.  Let |url-hashes flag| be `false`.
-
-  3.  <a for=set>For each</a> |expression| of |source list|:
+  2.  <a for=set>For each</a> |expression| of |source list|:
 
       1.  If |expression| is an <a>ASCII case-insensitive</a> match for the
           <a grammar>`keyword-source`</a>
           "<a grammar>`'url-hashes'`</a>",
           set |url-hashes flag| to `true`. Break out of the loop.
 
-  4.  If |url-hashes flag| is `true`, return the result of executing
+  3.  If |url-hashes flag| is `true`, return the result of executing
       [[#match-value-hash-to-source-list]] on |url|'s {{URL/href}} and |source list|.
 
-  5.  Return "`Does Not Match`".
+  4.  Return "`Does Not Match`".
 
   <h5 id="match-value-hash-to-source-list" algorithm>
     Does the hash of |value| match |source list|?
