@@ -2910,14 +2910,16 @@ Content-Type: application/reports+json
 
   Given a <a for="/">request</a> |request| and a <a for="/">policy</a> |policy|:
 
-  1.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
+  1.  Let |isVersion2| be false.
+
+  2.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
       on |request|.
 
-  2.  If the result of executing [[#should-directive-execute]] on |name|,
+  3.  If the result of executing [[#should-directive-execute]] on |name|,
       `script-src` and |policy| is "`No`", return "`Allowed`".
 
-  3.  Return the result of executing [[#script-pre-request]] on |request|,
-      this directive, and |policy|.
+  4.  Return the result of executing [[#script-pre-request]] on |request|,
+      this directive, |policy|, and |isVersion2|.
 
   <h5 algorithm id="script-src-post-request">
     `script-src` Post-request check
@@ -2928,14 +2930,16 @@ Content-Type: application/reports+json
   Given a <a for="/">request</a> |request|, a <a>response</a> |response|, and a
   <a for="/">policy</a> |policy|:
 
-  1.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
+  1.  Let |isVersion2| be false.
+
+  2.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
       on |request|.
 
-  2.  If the result of executing [[#should-directive-execute]] on |name|,
+  3.  If the result of executing [[#should-directive-execute]] on |name|,
       `script-src` and |policy| is "`No`", return "`Allowed`".
 
-  3.  Return the result of executing [[#script-post-request]] on |request|,
-      |response|, this directive, and |policy|.
+  4.  Return the result of executing [[#script-post-request]] on |request|,
+      |response|, this directive, |policy|, and |isVersion2|.
 
   <h5 algorithm id="script-src-inline">
     `script-src` Inline Check
@@ -2959,6 +2963,59 @@ Content-Type: application/reports+json
       and |source|, is "`Does Not Match`", return "`Blocked`".
 
   5.  Return "`Allowed`".
+
+  <h4 id="directive-script-src-v2">`script-src-v2`</h4>
+  The <dfn export>script-src-v2</dfn> directive extends the script-src directive
+  with a more strict allowlist.
+
+  TODO: Extend this section.
+
+  <h5 algorithm id="script-src-v2-pre-request">
+    `script-src-v2` Pre-request check
+  </h5>
+
+  This directive's <a for="directive">pre-request check</a> is as follows:
+
+  Given a <a for="/">request</a> |request| and a <a for="/">policy</a> |policy|:
+
+  1.  Let |isVersion2| be true.
+
+  2.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
+      on |request|.
+
+  3.  If the result of executing [[#should-directive-execute]] on |name|,
+      `script-src-v2` and |policy| is "`No`", return "`Allowed`".
+
+  4.  Return the result of executing [[#script-pre-request]] on |request|,
+      this directive, |policy|, and |isVersion2|.
+
+  <h5 algorithm id="script-src-v2-post-request">
+    `script-src-v2` Post-request check
+  </h5>
+
+  This directive's <a for="directive">post-request check</a> is as follows:
+
+  Given a <a for="/">request</a> |request|, a <a>response</a> |response|, and a
+  <a for="/">policy</a> |policy|:
+
+  1.  Let |isVersion2| be true.
+
+  1.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
+      on |request|.
+
+  2.  If the result of executing [[#should-directive-execute]] on |name|,
+      `script-src-v2` and |policy| is "`No`", return "`Allowed`".
+
+  3.  Return the result of executing [[#script-post-request]] on |request|,
+      |response|, this directive, |policy|, and |isVersion2|.
+
+  <h5 algorithm id="script-src-v2-inline">
+    `script-src-v2` Inline Check
+  </h5>
+
+  Given an {{Element}} |element|, a string |type|, a <a for="/">policy</a>
+  |policy| and a string |source|, return the result of executing
+  [[#script-src-inline]] on |element|, |type|, |policy| and |source|.
 
   <h4 id="directive-script-src-elem">`script-src-elem`</h4>
 
@@ -2989,14 +3046,16 @@ Content-Type: application/reports+json
 
   Given a <a for="/">request</a> |request| and a <a for="/">policy</a> |policy|:
 
-  1.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
+  1.  Let |isVersion2| be False.
+  
+  2.  Let |name| be the result of executing [[#effective-directive-for-a-request]]
       on |request|.
 
-  2.  If the result of executing [[#should-directive-execute]] on |name|,
+  3.  If the result of executing [[#should-directive-execute]] on |name|,
       `script-src-elem` and |policy| is "`No`", return "`Allowed`".
 
-  3.  Return the result of executing [[#script-pre-request]] on |request|,
-      this directive, and |policy|.
+  4.  Return the result of executing [[#script-pre-request]] on |request|,
+      this directive, |policy|, and |isVersion2|.
 
   <h5 algorithm id="script-src-elem-post-request">
     `script-src-elem` Post-request check
@@ -3762,7 +3821,7 @@ Content-Type: application/reports+json
   </h5>
 
   Given a <a for="/">request</a> |request|, a <a>directive</a> |directive|,
-  and a <a for="/">policy</a> |policy|:
+  a <a for="/">policy</a> |policy| and a boolean |isVersion2|:
 
   1.  If |request|'s <a for="request">destination</a> is <a for="request/destination">script-like</a>:
 
@@ -3776,9 +3835,11 @@ Content-Type: application/reports+json
           for="request">integrity metadata</a> and this directive's <a
           for="directive">value</a> is "`Matches`", return "`Allowed`".
 
-      3.  If the result of executing [[#match-url-hash-to-source-list]] on
-          this directive's <a for="directive">value</a> and |request|'s
-          <a for="request">current url</a> is "`Matches`", return "`Allowed`".
+      3.  If |isVersion2| is true:
+
+          1. If the result of executing [[#match-url-hash-to-source-list]] on
+             this directive's <a for="directive">value</a> and |request|'s
+             <a for="request">current url</a> is "`Matches`", return "`Allowed`".
 
       4.  If |directive|'s <a for="directive">value</a> contains a <a>source
           expression</a> that is an <a>ASCII case-insensitive</a> match for
@@ -3792,9 +3853,13 @@ Content-Type: application/reports+json
               Note: "<a grammar>`'strict-dynamic'`</a>" is explained in more detail
               in [[#strict-dynamic-usage]].
 
-      5.  If the result of executing [[#match-request-to-source-list]] on
-          |request|, |directive|'s <a for="directive">value</a>, and |policy|,
-          is "`Does Not Match`", return "`Blocked`".
+      5.  If |isVersion2| is false and if
+          |request|'s <a for="request">destination</a> is
+          <a for="request/destination">script-like</a>:
+
+          1.  If the result of executing [[#match-request-to-source-list]] on
+              |request|, |directive|'s <a for="directive">value</a>, and |policy|,
+              is "`Does Not Match`", return "`Blocked`".
 
   2.  Return "`Allowed`".
 
@@ -3805,7 +3870,8 @@ Content-Type: application/reports+json
   This directive's <a for="directive">post-request check</a> is as follows:
 
   Given a <a for="/">request</a> |request|, a <a>response</a> |response|,
-  a <a>directive</a> |directive|, and a <a for="/">policy</a> |policy|:
+  a <a>directive</a> |directive|, a <a for="/">policy</a> |policy| and a
+  boolean |isVersion2|:
 
   1.  If |request|'s <a for="request">destination</a> is <a for="request/destination">script-like</a>:
 
@@ -3829,9 +3895,11 @@ Content-Type: application/reports+json
 
               Otherwise, return "`Blocked`".
 
-      5.  If the result of executing [[#match-response-to-source-list]] on
-          |response|, |request|, |directive|'s <a for="directive">value</a>,
-          and |policy|, is "`Does Not Match`", return "`Blocked`".
+      5.  If |isVersion2| is false:
+      
+          1. If the result of executing [[#match-response-to-source-list]] on
+             |response|, |request|, |directive|'s <a for="directive">value</a>,
+             and |policy|, is "`Does Not Match`", return "`Blocked`".
 
   2.  Return "`Allowed`".
 
@@ -4602,6 +4670,10 @@ Content-Type: application/reports+json
   Given a string |directive name|:
 
   1.  Switch on |directive name|:
+
+      : "`script-src`"
+      ::
+        1.  Return `<< "script-src-v2", "script-src" >>`.
 
       : "`script-src-elem`"
       ::
