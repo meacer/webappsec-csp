@@ -691,7 +691,7 @@ spec:SRI; urlPrefix: https://w3c.github.io/webappsec-subresource-integrity
 
     ; Keywords:
     <dfn>keyword-source</dfn> = "<dfn>'self'</dfn>" / "<dfn>'unsafe-inline'</dfn>" / "<dfn>'unsafe-eval'</dfn>"
-                     / "<dfn>'strict-dynamic'</dfn>" / "<dfn>'unsafe-hashes'</dfn>" / "<dfn>'url-hashes'</dfn>"
+                     / "<dfn>'strict-dynamic'</dfn>" / "<dfn>'unsafe-hashes'</dfn>"
                      / "<dfn>'report-sample'</dfn>" / "<dfn>'unsafe-allow-redirects'</dfn>"
                      / "<dfn>'wasm-unsafe-eval'</dfn>" / "<dfn>'trusted-types-eval'</dfn>"
                      / "<dfn>'report-sha256'</dfn>" / "<dfn>'report-sha384'</dfn>"
@@ -704,6 +704,8 @@ spec:SRI; urlPrefix: https://w3c.github.io/webappsec-subresource-integrity
     <dfn>base64-value</dfn>  = 1*( <a>ALPHA</a> / <a>DIGIT</a> / "+" / "/" / "-" / "_" )*2( "=" )
 
     ; Digests: 'sha256-[digest goes here]'
+    <dfn>url-hash-source</dfn> = "'url-" <a>hash-algorithm</a> "-" <a>base64-value</a> "'"
+    <dfn>eval-hash-source</dfn> = "'eval-" <a>hash-algorithm</a> "-" <a>base64-value</a> "'"
     <dfn>hash-source</dfn>    = "'" <a>hash-algorithm</a> "-" <a>base64-value</a> "'"
     <dfn>hash-algorithm</dfn> = "sha256" / "sha384" / "sha512"
   </pre>
@@ -2965,8 +2967,18 @@ Content-Type: application/reports+json
   5.  Return "`Allowed`".
 
   <h4 id="directive-script-src-v2">`script-src-v2`</h4>
-  The <dfn export>script-src-v2</dfn> directive extends the script-src directive
-  with a more strict allowlist.
+
+  The <dfn export>script-src-v2</dfn> directive augments the <a>`script-src`</a>
+  directive. When present in a policy, <a>`script-src-v2`</a> overrides
+  <a>`script-src`</a>.
+
+  This directive removes support for <a grammar>scheme-source</a> and
+  <a grammar>host-source</a>, by ignoring their values in checks. Instead, this
+  directive introduces support for URL and eval() hashes. These hashes are
+  indicated with `url-` and `eval-` prefixes, respectively. 
+  `url-` hashes specify URLs that are allowed to be loaded. `eval-` hashes
+  specify hashes for `eval()` and `eval()`-like
+  functions, obviating the need to use "<a grammar>`'unsafe-eval'`</a>".
 
   TODO: Extend this section.
 
@@ -4474,7 +4486,7 @@ Content-Type: application/reports+json
 
   5.  If |type| is "`script`" or "`style`", or |unsafe-hashes flag| is
       `true`, return result of executing [[#match-value-hash-to-source-list]] on
-      |source| and |list|.
+      |source|, "`content`" and |list|.
 
       Note: Hashes apply to inline <{script}> and inline <{style}>. If the
       "<a grammar>`'unsafe-hashes'`</a>" source expression is present,
@@ -4492,26 +4504,34 @@ Content-Type: application/reports+json
   Given a <a>source list</a> |source list| and a url |url|, this algorithm
   returns "`Matches`" or "`Does Not Match`".
 
-  1.  Let |url-hashes flag| be `false`.
+  1.  Return the result of executing
+      [[#match-value-hash-to-source-list]] on |url|'s {{URL/href}},
+      |source list| and "`url hash`".
 
-  2.  <a for=set>For each</a> |expression| of |source list|:
+  <h5 id="is-expression-of-hash-type" algorithm>
+    Is |expression| of |hash type|?
+  </h5>
 
-      1.  If |expression| is an <a>ASCII case-insensitive</a> match for the
-          <a grammar>`keyword-source`</a>
-          "<a grammar>`'url-hashes'`</a>",
-          set |url-hashes flag| to `true`. Break out of the loop.
+  Given a {{String}} |hash type| and a <a grammar>source-expression</a>
+  |expression|, this algorithm returns "`Yes`" or "`No`".
 
-  3.  If |url-hashes flag| is `true`, return the result of executing
-      [[#match-value-hash-to-source-list]] on |url|'s {{URL/href}} and |source list|.
+  1.  If |hash type| is "url-hash" and |expression| matches the
+      <a grammar>`url-hash-source`</a> grammar, return "`Yes`".
 
-  4.  Return "`Does Not Match`".
+  2.  If |hash type| is "eval-hash" and |expression| matches the
+      <a grammar>`eval-hash-source`</a> grammar, return "`Yes`".
+
+  3.  If |expression| matches the <a grammar>`hash-source`</a> grammar,
+      return "`Yes`".
+
+  4.  Return "`No`".
 
   <h5 id="match-value-hash-to-source-list" algorithm>
     Does the hash of |value| match |source list|?
   </h5>
 
-  Given a {{String}} |value| and a <a>source list</a> |source list|, this
-  algorithm returns "`Matches`" or "`Does Not Match`".
+  Given a {{String}} |value|, {{String}} |hash type|, and a <a>source list</a>
+  |source list| type , this algorithm returns "`Matches`" or "`Does Not Match`".
 
   1.  Set |value| to the result of executing <a>UTF-8 encode</a>
       on the result of executing <a for="JavaScript string" data-lt="convert">JavaScript string converting</a>
@@ -4519,7 +4539,8 @@ Content-Type: application/reports+json
 
   2.  <a for=set>For each</a> |expression| of |source list|:
 
-      1.  If |expression| matches the <a grammar>`hash-source`</a> grammar:
+      1.  If the result of executing [[#is-expression-of-hash-type]] with
+          |hash type| and |expression| is "`Yes`":
 
           1.  Let |algorithm| be null.
 
@@ -5368,6 +5389,8 @@ Content-Type: application/reports+json
   ::  This document (see [[#directive-script-src-attr]])
   :   <a>`script-src-elem`</a>
   ::  This document (see [[#directive-script-src-elem]])
+  :   <a>`script-src-v2`</a>
+  ::  This document (see [[#directive-script-src-v2]])
   :   <a>`style-src`</a>
   ::  This document (see [[#directive-style-src]])
   :   <a>`style-src-attr`</a>
