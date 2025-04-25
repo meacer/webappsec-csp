@@ -4692,17 +4692,13 @@ Content-Type: application/reports+json
 
   1.  Switch on |directive name|:
 
-      : "`script-src`"
-      ::
-        1.  Return `<< "script-src-v2", "script-src" >>`.
-
       : "`script-src-elem`"
       ::
-        1.  Return `<< "script-src-elem", "script-src", "default-src" >>`.
+        1.  Return `<< "script-src-v2", "script-src-elem", "script-src", "default-src" >>`.
 
       : "`script-src-attr`"
       ::
-        1.  Return `<< "script-src-attr", "script-src", "default-src" >>`.
+        1.  Return `<< "script-src-v2", "script-src-attr", "script-src", "default-src" >>`.
 
       : "`style-src-elem`"
       ::
